@@ -820,8 +820,11 @@ def login():
             user_data = mongo.db.users.find_one({'username': username})
             
             if user_data and check_password_hash(user_data['password_hash'], password):
-                # Check if account is verified
-                if not user_data.get('is_verified', False):
+                # Check if account is verified (for new users with OTP system)
+                # Existing users without is_verified field are considered verified
+                is_verified = user_data.get('is_verified', True)  # Default to True for existing users
+                
+                if not is_verified:
                     flash('Account not verified! Please check your email for OTP verification.', 'error')
                     return redirect(url_for('verify_otp', user_id=str(user_data['_id'])))
                 
