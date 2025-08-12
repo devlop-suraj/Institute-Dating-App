@@ -37,47 +37,14 @@ MAX_FILE_SIZE = app.config.get('MAX_CONTENT_LENGTH', 5 * 1024 * 1024)  # 5MB
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
-# Initialize multiple Flask-Mail instances for different purposes
+# Initialize Flask-Mail instance
 from flask_mail import Mail
 
-# OTP Mail Configuration
-otp_mail = Mail()
-otp_mail.init_app(app)
-otp_mail.config.update(
-    MAIL_SERVER=app.config.get('OTP_MAIL_SERVER', 'smtp.gmail.com'),
-    MAIL_PORT=app.config.get('OTP_MAIL_PORT', 587),
-    MAIL_USE_TLS=app.config.get('OTP_MAIL_USE_TLS', True),
-    MAIL_USERNAME=app.config.get('OTP_MAIL_USERNAME', 'surajkumarch110@gmail.com'),
-    MAIL_PASSWORD=app.config.get('OTP_MAIL_PASSWORD', 'tkna qlfx bouq olwm'),
-    MAIL_DEFAULT_SENDER=app.config.get('OTP_MAIL_DEFAULT_SENDER', 'surajkumarch110@gmail.com')
-)
-
-# Notification Mail Configuration
-notification_mail = Mail()
-notification_mail.init_app(app)
-notification_mail.config.update(
-    MAIL_SERVER=app.config.get('NOTIFICATION_MAIL_SERVER', 'smtp.gmail.com'),
-    MAIL_PORT=app.config.get('NOTIFICATION_MAIL_PORT', 587),
-    MAIL_USE_TLS=app.config.get('NOTIFICATION_MAIL_USE_TLS', True),
-    MAIL_USERNAME=app.config.get('NOTIFICATION_MAIL_USERNAME', 'mindcodex5@gmail.com'),
-    MAIL_PASSWORD=app.config.get('NOTIFICATION_MAIL_PASSWORD', 'bppw pjcr rltd mcyq'),
-    MAIL_DEFAULT_SENDER=app.config.get('NOTIFICATION_MAIL_DEFAULT_SENDER', 'mindcodex5@gmail.com')
-)
-
-# Welcome Mail Configuration
-welcome_mail = Mail()
-welcome_mail.init_app(app)
-welcome_mail.config.update(
-    MAIL_SERVER=app.config.get('WELCOME_MAIL_SERVER', 'smtp.gmail.com'),
-    MAIL_PORT=app.config.get('WELCOME_MAIL_PORT', 587),
-    MAIL_USE_TLS=app.config.get('WELCOME_MAIL_USE_TLS', True),
-    MAIL_USERNAME=app.config.get('WELCOME_MAIL_USERNAME', 'mindcodex5@gmail.com'),
-    MAIL_PASSWORD=app.config.get('WELCOME_MAIL_PASSWORD', 'bppw pjcr rltd mcyq'),
-    MAIL_DEFAULT_SENDER=app.config.get('WELCOME_MAIL_DEFAULT_SENDER', 'mindcodex5@gmail.com')
-)
-
-# Default mail instance (for backward compatibility)
-mail = otp_mail
+# Create a single mail instance for now
+mail = Mail()
+otp_mail = mail
+notification_mail = mail
+welcome_mail = mail
 
 # Initialize serializer for password reset tokens
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
@@ -98,6 +65,11 @@ except Exception as e:
     print("3. Database user credentials are correct")
     print("4. Connection string is properly formatted")
     print("\nCheck MONGODB_SETUP.md for detailed setup instructions")
+
+# Configure and initialize Flask-Mail
+mail.init_app(app)
+
+
 
 # Add global error handler
 @app.errorhandler(500)
