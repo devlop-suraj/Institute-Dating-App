@@ -31,6 +31,5 @@ colorama==0.4.6
 gunicorn==21.2.0
 
 # Additional dependencies that might be needed
-pymongo[srv]==4.14.0
 email-validator==2.1.0
 cryptography==42.0.0 
