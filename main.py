@@ -6,8 +6,9 @@ from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import random
+import string
 from bson import ObjectId
 from PIL import Image
 import io
@@ -146,6 +147,70 @@ Founded by Suraj Kumar - CEO
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
+        return False
+
+def generate_otp():
+    """Generate a 6-digit OTP"""
+    return ''.join(random.choices(string.digits, k=6))
+
+def send_otp_email(email, otp, first_name):
+    """Send OTP email for account verification"""
+    try:
+        msg = Message(
+            'Account Verification OTP - Institute Dating',
+            recipients=[email],
+            body=f'''Hello {first_name}!
+
+Your account verification OTP is: {otp}
+
+Please enter this OTP to activate your account.
+
+This OTP will expire in 10 minutes.
+
+Best regards,
+Institute Dating Team
+Founded by Suraj Kumar - CEO
+''',
+            html=f'''
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 15px;">
+                <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
+                    <h1 style="color: #667eea; margin-bottom: 20px;">🔐 Account Verification</h1>
+                    
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                        <h3 style="color: #333; margin-bottom: 15px;">Your Verification Code</h3>
+                        <div style="background: #667eea; color: white; padding: 20px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                            {otp}
+                        </div>
+                        <p style="color: #666; font-size: 14px; margin: 0;">
+                            Enter this code to activate your account
+                        </p>
+                    </div>
+                    
+                    <div style="background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #bee5eb;">
+                        <p style="margin: 0; color: #0c5460; font-size: 14px;">
+                            <strong>⚠️ Important:</strong> This OTP will expire in 10 minutes!
+                        </p>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; margin: 20px 0;">
+                        If you didn't create this account, please ignore this email.
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="color: white; font-size: 14px; margin: 0;">
+                        Best regards,<br>
+                        <strong>Institute Dating Team</strong><br>
+                        Founded by <strong>Suraj Kumar</strong> - CEO
+                    </p>
+                </div>
+            </div>
+            '''
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending OTP email: {e}")
         return False
 
 def send_signup_confirmation_email(email, username, user_id, first_name, last_name):
@@ -591,7 +656,7 @@ def register():
                 flash('Email already exists!', 'error')
                 return render_template('register.html')
             
-            # Create new user document with minimal required fields
+            # Create new user document with minimal required fields (initially inactive)
             user_data = {
                 'username': username,
                 'email': email,
@@ -614,21 +679,135 @@ def register():
                 'personality_type': '',
                 'life_goals': [],
                 'compatibility_score': 0,
-                'created_at': datetime.now(timezone.utc)
+                'created_at': datetime.now(timezone.utc),
+                'is_verified': False,  # Account not verified yet
+                'otp': '',  # Will be set when OTP is sent
+                'otp_expires_at': None  # OTP expiration time
             }
             
             result = mongo.db.users.insert_one(user_data)
             
-            # Send signup confirmation email
-            send_signup_confirmation_email(email, username, str(result.inserted_id), first_name, last_name)
+            # Generate and send OTP
+            otp = generate_otp()
+            otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
             
-            flash('Registration successful! Please login and complete your profile for better matches.', 'success')
-            return redirect(url_for('login'))
+            # Update user with OTP
+            mongo.db.users.update_one(
+                {'_id': result.inserted_id},
+                {'$set': {
+                    'otp': otp,
+                    'otp_expires_at': otp_expires_at
+                }}
+            )
+            
+            # Send OTP email
+            if send_otp_email(email, otp, first_name):
+                flash('Registration successful! Please check your email for OTP verification to activate your account.', 'success')
+                return redirect(url_for('verify_otp', user_id=str(result.inserted_id)))
+            else:
+                # If email fails, delete the user and show error
+                mongo.db.users.delete_one({'_id': result.inserted_id})
+                flash('Registration failed! Could not send verification email. Please try again.', 'error')
+                return render_template('register.html')
         except Exception as e:
             flash(f'Registration failed: {str(e)}', 'error')
             return render_template('register.html')
     
     return render_template('register.html')
+
+@app.route('/verify_otp/<user_id>', methods=['GET', 'POST'])
+def verify_otp(user_id):
+    """Verify OTP and activate user account"""
+    try:
+        user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+        if not user_data:
+            flash('Invalid verification link!', 'error')
+            return redirect(url_for('register'))
+        
+        if user_data.get('is_verified', False):
+            flash('Account already verified! Please login.', 'success')
+            return redirect(url_for('login'))
+        
+        if request.method == 'POST':
+            otp = request.form.get('otp', '').strip()
+            
+            if not otp:
+                flash('Please enter the OTP!', 'error')
+                return render_template('verify_otp.html', user_id=user_id, email=user_data.get('email', ''))
+            
+                        # Check if OTP matches and is not expired
+            if (otp == user_data.get('otp', '') and 
+                user_data.get('otp_expires_at')):
+                
+                # Convert database datetime to timezone-aware if it's naive
+                otp_expires_at = user_data.get('otp_expires_at')
+                if otp_expires_at and otp_expires_at.tzinfo is None:
+                    # If naive datetime, assume it's UTC
+                    otp_expires_at = otp_expires_at.replace(tzinfo=timezone.utc)
+                
+                if otp_expires_at and datetime.now(timezone.utc) < otp_expires_at:
+                    # Activate account
+                    mongo.db.users.update_one(
+                        {'_id': ObjectId(user_id)},
+                        {'$set': {
+                            'is_verified': True,
+                            'otp': '',  # Clear OTP
+                            'otp_expires_at': None  # Clear expiration
+                        }}
+                    )
+                    
+                    # Send welcome email
+                    send_signup_confirmation_email(
+                        user_data.get('email'), 
+                        user_data.get('username'), 
+                        str(user_data.get('_id')), 
+                        user_data.get('first_name'), 
+                        user_data.get('last_name')
+                    )
+                    
+                    flash('Account verified successfully! Welcome to Institute Dating! 🎉', 'success')
+                    return redirect(url_for('login'))
+                else:
+                    flash('Invalid or expired OTP! Please check your email or request a new one.', 'error')
+        
+        return render_template('verify_otp.html', user_id=user_id, email=user_data.get('email', ''))
+        
+    except Exception as e:
+        flash(f'Verification failed: {str(e)}', 'error')
+        return redirect(url_for('register'))
+
+@app.route('/resend_otp/<user_id>', methods=['POST'])
+def resend_otp(user_id):
+    """Resend OTP if expired"""
+    try:
+        user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+        if not user_data:
+            return jsonify({'success': False, 'message': 'User not found!'})
+        
+        if user_data.get('is_verified', False):
+            return jsonify({'success': False, 'message': 'Account already verified!'})
+        
+        # Generate new OTP
+        otp = generate_otp()
+        otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+        
+        # Update user with new OTP
+        mongo.db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {
+                'otp': otp,
+                'otp_expires_at': otp_expires_at
+            }}
+        )
+        
+        # Send new OTP email
+        if send_otp_email(user_data.get('email'), otp, user_data.get('first_name')):
+            return jsonify({'success': True, 'message': 'New OTP sent successfully!'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to send OTP email!'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -641,6 +820,11 @@ def login():
             user_data = mongo.db.users.find_one({'username': username})
             
             if user_data and check_password_hash(user_data['password_hash'], password):
+                # Check if account is verified
+                if not user_data.get('is_verified', False):
+                    flash('Account not verified! Please check your email for OTP verification.', 'error')
+                    return redirect(url_for('verify_otp', user_id=str(user_data['_id'])))
+                
                 user = User(user_data)
                 login_user(user)
                 return redirect(url_for('dashboard'))

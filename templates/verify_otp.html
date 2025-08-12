@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Verify OTP - Institute Dating{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4><i class="fas fa-shield-alt me-2"></i>Account Verification</h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-envelope-open-text fa-3x text-primary mb-3"></i>
+                        <h5 class="text-primary">Check Your Email</h5>
+                        <p class="text-muted">
+                            We've sent a verification code to:<br>
+                            <strong>{{ email }}</strong>
+                        </p>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" id="otpForm">
+                        <div class="mb-4">
+                            <label for="otp" class="form-label">
+                                <i class="fas fa-key me-2"></i>Enter Verification Code
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg text-center" 
+                                   id="otp" 
+                                   name="otp" 
+                                   placeholder="000000" 
+                                   maxlength="6" 
+                                   pattern="[0-9]{6}" 
+                                   required 
+                                   autocomplete="off">
+                            <div class="form-text text-center">
+                                Enter the 6-digit code from your email
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i>Verify Account
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="text-center">
+                        <p class="text-muted mb-2">Didn't receive the code?</p>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resendOTP()">
+                            <i class="fas fa-redo me-2"></i>Resend OTP
+                        </button>
+                    </div>
+
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Having trouble? 
+                            <a href="{{ url_for('register') }}" class="text-decoration-none">Register again</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('otpForm').addEventListener('submit', function(e) {
+    const otp = document.getElementById('otp').value;
+    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+        e.preventDefault();
+        alert('Please enter a valid 6-digit OTP code.');
+        return false;
+    }
+});
+
+function resendOTP() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    // Disable button and show loading
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+    
+    fetch('{{ url_for("resend_otp", user_id=user_id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error resending OTP. Please try again.');
+    })
+    .finally(() => {
+        // Re-enable button
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    const form = document.getElementById('otpForm');
+    form.parentNode.insertBefore(alertDiv, form);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Auto-focus on OTP input
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('otp').focus();
+});
+
+// Format OTP input (add spaces for better readability)
+document.getElementById('otp').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 6) {
+        value = value.substring(0, 6);
+    }
+    e.target.value = value;
+});
+</script>
+{% endblock %}
