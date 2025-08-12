@@ -591,31 +591,31 @@ def register():
                 flash('Email already exists!', 'error')
                 return render_template('register.html')
             
-             # Create new user document with minimal required fields
-             user_data = {
-                 'username': username,
-                 'email': email,
-                 'password_hash': generate_password_hash(password),
-                 'first_name': first_name,
-                 'last_name': last_name,
-                 'age': age,
-                 'gender': gender,
-                 'interested_in': interested_in,
-                 'institute': institute,  # Auto-filled for IIT Madras, user-selected for others
-                 'course': course,
-                 'year': year,
-                 # Optional fields - can be filled later
-                 'bio': '',
-                 'profile_picture': '',
-                 'location': '',
-                 'building_block': '',
-                 'interests': [],
-                 'study_habits': [],
-                 'personality_type': '',
-                 'life_goals': [],
-                 'compatibility_score': 0,
-                 'created_at': datetime.now(timezone.utc)
-             }
+            # Create new user document with minimal required fields
+            user_data = {
+                'username': username,
+                'email': email,
+                'password_hash': generate_password_hash(password),
+                'first_name': first_name,
+                'last_name': last_name,
+                'age': age,
+                'gender': gender,
+                'interested_in': interested_in,
+                'institute': institute,  # Auto-filled for IIT Madras, user-selected for others
+                'course': course,
+                'year': year,
+                # Optional fields - can be filled later
+                'bio': '',
+                'profile_picture': '',
+                'location': '',
+                'building_block': '',
+                'interests': [],
+                'study_habits': [],
+                'personality_type': '',
+                'life_goals': [],
+                'compatibility_score': 0,
+                'created_at': datetime.now(timezone.utc)
+            }
             
             result = mongo.db.users.insert_one(user_data)
             
