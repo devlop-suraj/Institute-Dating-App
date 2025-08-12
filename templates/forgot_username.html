@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Forgot Username - Institute Dating{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-circle me-2"></i>Forgot Username
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    {% if user_data %}
+                        <!-- Show username and profile picture -->
+                        <div class="text-center mb-4">
+                            <div class="profile-picture-section mb-3">
+                                {% if user_data.profile_picture %}
+                                    <img src="{{ url_for('uploaded_file', filename=user_data.profile_picture) }}" 
+                                         alt="Profile Picture" 
+                                         class="rounded-circle"
+                                         style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #667eea;">
+                                {% else %}
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                                         style="width: 120px; height: 120px; background: #f8f9fa; border: 3px dashed #dee2e6;">
+                                        <i class="fas fa-user fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <h5 class="text-success mb-2">
+                                <i class="fas fa-check-circle me-2"></i>Account Found!
+                            </h5>
+                            <p class="text-muted mb-3">Here are your account details:</p>
+                            
+                            <div class="account-info bg-light p-3 rounded mb-4">
+                                <div class="row text-start">
+                                    <div class="col-6">
+                                        <strong>Name:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        {{ user_data.first_name }} {{ user_data.last_name }}
+                                    </div>
+                                </div>
+                                <div class="row text-start">
+                                    <div class="col-6">
+                                        <strong>Username:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="badge bg-primary fs-6">{{ user_data.username }}</span>
+                                    </div>
+                                </div>
+                                <div class="row text-start">
+                                    <div class="col-6">
+                                        <strong>Email:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        {{ user_data.email }}
+                                    </div>
+                                </div>
+                                {% if user_data.institute %}
+                                <div class="row text-start">
+                                    <div class="col-6">
+                                        <strong>Institute:</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        {{ user_data.institute }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Go to Login
+                                </a>
+                                <button class="btn btn-outline-secondary" onclick="resetForm()">
+                                    <i class="fas fa-search me-2"></i>Search Another Email
+                                </button>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Forgot your password? <a href="{{ url_for('forgot_password') }}" class="text-primary">Reset it here</a>
+                                </small>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Show email input form -->
+                        <div class="text-center mb-4">
+                            <i class="fas fa-user-circle fa-3x text-primary mb-3"></i>
+                            <h5>Forgot Your Username?</h5>
+                            <p class="text-muted">Enter your email address to retrieve your username</p>
+                        </div>
+                        
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       placeholder="Enter your email address" required>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    We'll show your username and profile picture directly
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Find Username
+                                </button>
+                                <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Login
+                                </a>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Additional Help Section -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="text-muted">
+                        <i class="fas fa-question-circle me-2"></i>Need Help?
+                    </h6>
+                    <ul class="list-unstyled mb-0">
+                        <li><small class="text-muted">• Make sure you're using the email address you registered with</small></li>
+                        <li><small class="text-muted">• Check your spam folder if you don't receive emails</small></li>
+                        <li><small class="text-muted">• Contact support if you continue to have issues</small></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 20px;
+}
+
+.card-header {
+    border-radius: 20px 20px 0 0 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.account-info {
+    border-left: 4px solid #667eea;
+}
+
+.profile-picture-section img {
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+}
+</style>
+
+<script>
+function resetForm() {
+    // Reload the page to show the email input form again
+    window.location.reload();
+}
+</script>
+{% endblock %}

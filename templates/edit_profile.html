@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - Institute Dating{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Edit Your Profile
+                    </h3>
+                    <p class="mb-0">Update your information to get better matches!</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('edit_profile') }}" enctype="multipart/form-data">
+                        <!-- Basic Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ current_user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ current_user.last_name }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="age" class="form-label">Age *</label>
+                                <input type="number" class="form-control" id="age" name="age" value="{{ current_user.age }}" min="18" max="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">City/Location</label>
+                                <input type="text" class="form-control" id="location" name="location" value="{{ current_user.location }}" placeholder="e.g., Delhi, Mumbai, Bangalore">
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Profile Fields -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="building_block" class="form-label">Building/Block</label>
+                                <input type="text" class="form-control" id="building_block" name="building_block" value="{{ current_user.building_block }}" placeholder="e.g., Block A, Building 3">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="personality_type" class="form-label">Personality Type</label>
+                                <select class="form-select" id="personality_type" name="personality_type">
+                                    <option value="">Select Personality</option>
+                                    <option value="Introvert" {% if current_user.personality_type == 'Introvert' %}selected{% endif %}>Introvert</option>
+                                    <option value="Extrovert" {% if current_user.personality_type == 'Extrovert' %}selected{% endif %}>Extrovert</option>
+                                    <option value="Ambivert" {% if current_user.personality_type == 'Ambivert' %}selected{% endif %}>Ambivert</option>
+                                    <option value="Analytical" {% if current_user.personality_type == 'Analytical' %}selected{% endif %}>Analytical</option>
+                                    <option value="Creative" {% if current_user.personality_type == 'Creative' %}selected{% endif %}>Creative</option>
+                                    <option value="Adventurous" {% if current_user.personality_type == 'Adventurous' %}selected{% endif %}>Adventurous</option>
+                                    <option value="Cautious" {% if current_user.personality_type == 'Cautious' %}selected{% endif %}>Cautious</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="compatibility_score" class="form-label">Profile Completeness</label>
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ current_user.compatibility_score }}%" aria-valuenow="{{ current_user.compatibility_score }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ current_user.compatibility_score }}%
+                                </div>
+                            </div>
+                            <small class="text-muted">Complete your profile to get better matches!</small>
+                        </div>
+
+                        <!-- Profile Picture Section -->
+                        <div class="mb-4">
+                            <label class="form-label">Profile Picture</label>
+                            <div class="profile-picture-section">
+                                <div class="current-picture mb-3">
+                                    {% if current_user.profile_picture %}
+                                        <img src="{{ url_for('uploaded_file', filename=current_user.profile_picture) }}" 
+                                             alt="Current Profile Picture" 
+                                             class="profile-preview rounded-circle" 
+                                             style="width: 120px; height: 120px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="no-picture-placeholder rounded-circle d-flex align-items-center justify-content-center" 
+                                             style="width: 120px; height: 120px; background: #f8f9fa; border: 2px dashed #dee2e6;">
+                                            <i class="fas fa-user fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="upload-section">
+                                    <input type="file" class="form-control" id="profile_picture" name="profile_picture" 
+                                           accept="image/*" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('profile_picture').click()">
+                                        <i class="fas fa-camera me-2"></i>Choose New Picture
+                                    </button>
+                                    <small class="form-text d-block mt-2">
+                                        Supported formats: PNG, JPG, JPEG, GIF, WEBP (Max: 5MB)<br>
+                                        <span class="text-success">Profile pictures get +15 points to your compatibility score!</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="interests" class="form-label">Interests & Hobbies</label>
+                            <input type="text" class="form-control" id="interests" name="interests" value="{{ current_user.interests|join(', ') if current_user.interests else '' }}" placeholder="e.g., Reading, Music, Sports, Travel (comma separated)">
+                            <div class="form-text">Separate multiple interests with commas</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="study_habits" class="form-label">Study Habits & Preferences</label>
+                            <input type="text" class="form-control" id="study_habits" name="study_habits" value="{{ current_user.study_habits|join(', ') if current_user.study_habits else '' }}" placeholder="e.g., Morning study, Group study, Library, Quiet place (comma separated)">
+                            <div class="form-text">Separate multiple habits with commas</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="life_goals" class="form-label">Life Goals & Aspirations</label>
+                            <input type="text" class="form-control" id="life_goals" name="life_goals" value="{{ current_user.life_goals|join(', ') if current_user.life_goals else '' }}" placeholder="e.g., Higher studies, Job, Entrepreneurship, Research (comma separated)">
+                            <div class="form-text">Separate multiple goals with commas</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">Bio/About Me</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="4" placeholder="Tell us about yourself, your dreams, and what you're looking for...">{{ current_user.bio }}</textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('profile', user_id=current_user.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Profile
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 20px;
+}
+
+.card-header {
+    border-radius: 20px 20px 0 0 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.progress {
+    height: 25px;
+    border-radius: 15px;
+}
+
+.progress-bar {
+    border-radius: 15px;
+    font-weight: 600;
+}
+
+.profile-picture-section {
+    text-align: center;
+}
+
+.profile-preview {
+    border: 3px solid #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.no-picture-placeholder {
+    border: 2px dashed #dee2e6;
+}
+
+.upload-section {
+    margin-top: 1rem;
+}
+</style>
+
+<script>
+// Profile picture upload functionality
+document.getElementById('profile_picture').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            this.value = '';
+            return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a valid image file (PNG, JPG, JPEG, GIF, WEBP)');
+            this.value = '';
+            return;
+        }
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.querySelector('.current-picture');
+            preview.innerHTML = `<img src="${e.target.result}" alt="Profile Picture Preview" class="profile-preview rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">`;
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload file immediately
+        uploadProfilePicture(file);
+    }
+});
+
+function uploadProfilePicture(file) {
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    
+    fetch('/upload_profile_picture', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showAlert('Profile picture updated successfully!', 'success');
+            
+            // Update compatibility score
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = progressBar.textContent;
+            progressBar.style.width = data.compatibility_score + '%';
+            progressBar.textContent = data.compatibility_score + '%';
+            progressBar.setAttribute('aria-valuenow', data.compatibility_score);
+            
+            // Update filename in preview
+            const img = document.querySelector('.profile-preview');
+            if (img) {
+                img.src = `/uploads/${data.filename}`;
+            }
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error uploading profile picture', 'error');
+    });
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

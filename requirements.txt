@@ -1,0 +1,36 @@
+# Core Flask Framework
+Flask==3.0.0
+Flask-Login==0.6.3
+Flask-PyMongo==3.0.1
+Flask-Mail==0.10.0
+
+# Database and Data Handling
+PyMongo>=4.6.0
+dnspython>=2.7.0
+
+# Security and Authentication
+Werkzeug==3.0.1
+itsdangerous==2.2.0
+
+# Template Engine and Markup
+Jinja2==3.1.2
+MarkupSafe==3.0.2
+
+# Image Processing
+Pillow==11.2.1
+
+# Environment and Configuration
+python-dotenv==1.1.1
+
+# Utilities
+click==8.1.8
+blinker==1.9.0
+colorama==0.4.6
+
+# Production Server (for Azure deployment)
+gunicorn==21.2.0
+
+# Additional dependencies that might be needed
+pymongo[srv]==4.14.0
+email-validator==2.1.0
+cryptography==42.0.0 

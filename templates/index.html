@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Institute Dating{% endblock %}
+
+{% block content %}
+<div class="row align-items-center min-vh-100">
+    <div class="col-lg-6">
+        <div class="text-white">
+            <h1 class="display-3 fw-bold mb-4">
+                Find Your Perfect Match at Institute
+            </h1>
+            <p class="lead mb-4">
+                Connect with fellow students who share your interests, values, and dreams. 
+                Build meaningful relationships within your academic community.
+            </p>
+            <div class="d-flex gap-3 flex-wrap">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-heart me-2"></i>Get Started
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Already a Member?
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="text-center">
+            <div class="position-relative">
+                <div class="bg-white bg-opacity-10 rounded-circle d-inline-block p-5 mb-4">
+                    <i class="fas fa-heart text-white" style="font-size: 8rem;"></i>
+                </div>
+                <div class="position-absolute top-0 start-100 translate-middle">
+                    <div class="bg-primary rounded-circle p-3">
+                        <i class="fas fa-users text-white"></i>
+                    </div>
+                </div>
+                <div class="position-absolute bottom-0 end-0">
+                    <div class="bg-success rounded-circle p-3">
+                        <i class="fas fa-graduation-cap text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 pt-5">
+    <div class="col-12">
+        <h2 class="text-center text-white mb-5">Why Choose Institute Dating?</h2>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-block p-4 mb-3">
+                    <i class="fas fa-users text-primary" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5 class="card-title">Community Based</h5>
+                <p class="card-text">Connect with students from your own institute who understand your academic journey.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <div class="bg-success bg-opacity-10 rounded-circle d-inline-block p-4 mb-3">
+                    <i class="fas fa-shield-alt text-success" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5 class="card-title">Safe & Secure</h5>
+                <p class="card-text">Verified student profiles ensure a safe and trustworthy dating environment.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <div class="bg-warning bg-opacity-10 rounded-circle d-inline-block p-4 mb-3">
+                    <i class="fas fa-graduation-cap text-warning" style="font-size: 2.5rem;"></i>
+                </div>
+                <h5 class="card-title">Academic Focus</h5>
+                <p class="card-text">Find partners who share your academic interests and career goals.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 pt-5">
+    <div class="col-12 text-center">
+        <div class="bg-white bg-opacity-10 rounded-3 p-5">
+            <h3 class="text-white mb-4">Ready to Start Your Journey?</h3>
+            <p class="text-white-50 mb-4">Join thousands of students who have found meaningful connections</p>
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-heart me-2"></i>Create Your Profile Now
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

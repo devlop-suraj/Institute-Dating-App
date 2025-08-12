@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Institute Dating{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-card text-center p-4">
+                <h2 class="text-white mb-3 fw-bold">
+                    <i class="fas fa-heart me-2"></i>Welcome, {{ current_user.first_name }}!
+                </h2>
+                                        <p class="lead mb-3 text-white-50">Discover amazing people from your institute</p>
+                <div class="profile-completeness mb-3">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <span class="me-3 text-white fw-semibold">Profile Completeness:</span>
+                        <div class="progress me-3" style="width: 200px; height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ current_user.compatibility_score }}%" aria-valuenow="{{ current_user.compatibility_score }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ current_user.compatibility_score }}%
+                            </div>
+                        </div>
+                        <a href="{{ url_for('edit_profile') }}" class="btn btn-sm btn-outline-light border-2">
+                            <i class="fas fa-edit me-1"></i>Complete Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Potential Matches -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                                            <h3 class="mb-0 text-dark">
+                            <i class="fas fa-users me-2 text-primary"></i>Potential Matches
+                            <span class="badge bg-primary ms-2">{{ potential_matches|length }}</span>
+                        </h3>
+                                            <p class="text-dark-50 mb-0 mt-2">
+                            <i class="fas fa-info-circle me-1 text-info"></i>
+                            Our smart algorithm finds the best matches for you based on compatibility, interests, and preferences.
+                        </p>
+                </div>
+                <button class="btn btn-outline-primary" onclick="refreshMatches()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh Matches
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% if potential_matches %}
+        <div class="row" id="matchesContainer">
+            {% for user in potential_matches %}
+            <div class="col-lg-4 col-md-6 mb-4 match-card" data-user-id="{{ user.id }}">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <h5 class="card-title text-dark fw-bold">{{ user.first_name }} {{ user.last_name }}, {{ user.age }}</h5>
+                        <p class="card-text text-dark-50">{{ user.bio[:100] + '...' if user.bio and user.bio|length > 100 else user.bio or 'No bio available' }}</p>
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <small class="text-muted">{{ user.course }}</small>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">{{ user.year }}{% if user.year == 1 %}st{% elif user.year == 2 %}nd{% elif user.year == 3 %}rd{% else %}th{% endif %} Year</small>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted">{{ user.location or 'Location not specified' }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Profile Picture -->
+                        <div class="text-center mb-3">
+                            {% if user.profile_picture %}
+                                <img src="{{ url_for('uploaded_file', filename=user.profile_picture) }}" 
+                                     alt="{{ user.first_name }}'s Profile Picture" 
+                                     class="profile-picture-small rounded-circle"
+                                     style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #667eea;">
+                            {% else %}
+                                <div class="profile-picture-placeholder rounded-circle d-flex align-items-center justify-content-center mx-auto"
+                                     style="width: 80px; height: 80px; background: #f8f9fa; border: 2px dashed #dee2e6;">
+                                    <i class="fas fa-user fa-2x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if user.interests %}
+                        <div class="interests-section mb-3">
+                            <h6 class="text-dark mb-2 fw-semibold">
+                                <i class="fas fa-heart me-1 text-danger"></i>Interests
+                            </h6>
+                            <div class="interests-tags">
+                                {% for interest in user.interests[:5] %}
+                                <span class="badge bg-primary text-white me-1 mb-1">{{ interest.strip() }}</span>
+                                {% endfor %}
+                                {% if user.interests|length > 5 %}
+                                <span class="badge bg-secondary text-white">+{{ user.interests|length - 5 }} more</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if user.personality_type %}
+                        <div class="personality-section mb-3">
+                            <h6 class="text-dark mb-2 fw-semibold">
+                                <i class="fas fa-brain me-1 text-info"></i>Personality
+                            </h6>
+                            <span class="badge bg-info text-white">{{ user.personality_type }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="match-actions d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>View Profile
+                            </a>
+                            <button class="btn btn-primary btn-sm like-btn" onclick="likeUser('{{ user.id }}')">
+                                <i class="fas fa-heart me-1"></i>Like
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="no-matches">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No potential matches found</h4>
+                <p class="text-muted">Complete your profile to get better matches or get additional suggestions!</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Complete Profile
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="getAdditionalSuggestions()">
+                        <i class="fas fa-lightbulb me-2"></i>Get Suggestions
+                    </button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.welcome-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 1;
+}
+
+.welcome-card > * {
+    position: relative;
+    z-index: 2;
+}
+
+.profile-completeness .progress {
+    border-radius: 15px;
+}
+
+.profile-completeness .progress-bar {
+    border-radius: 15px;
+    font-weight: 600;
+}
+
+.match-card .card {
+    border: none;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+}
+
+.compatibility-badge .badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.campus-badge small {
+    font-size: 0.8rem;
+}
+
+.interests-tags .badge {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    border-radius: 15px;
+    font-weight: 500;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.personality-section .badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.no-matches {
+    padding: 3rem;
+}
+
+/* Additional improvements for better readability */
+.card-body {
+    color: #2c3e50;
+}
+
+.card-title {
+    color: #2c3e50 !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.text-dark-50 {
+    color: #495057 !important;
+}
+
+/* Improve button contrast */
+.btn-outline-primary {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+/* Profile picture improvements */
+.profile-picture-small {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.profile-picture-placeholder {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Modal styles */
+.modal {
+    z-index: 1050;
+}
+
+.modal-backdrop {
+    z-index: 1040;
+}
+
+.modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+.modal-title {
+    color: white;
+    font-weight: 600;
+}
+</style>
+
+<script>
+function likeUser(userId) {
+    fetch(`/like_user/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showAlert(data.message, data.is_match ? 'success' : 'info');
+            
+            // Show notification bar
+            if (typeof showNotificationBar === 'function') {
+                showNotificationBar(data.message);
+            }
+            
+            // If it's a match, show special celebration
+            if (data.is_match) {
+                showMatchCelebration();
+            }
+            
+            // Remove the card from view
+            const card = document.querySelector(`[data-user-id="${userId}"]`);
+            if (card) {
+                card.style.animation = 'slideOut 0.5s ease-out';
+                setTimeout(() => {
+                    card.remove();
+                    updateMatchCount();
+                }, 500);
+            }
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred while sending like', 'error');
+    });
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function showMatchCelebration() {
+    // Create celebration animation
+    const celebration = document.createElement('div');
+    celebration.className = 'match-celebration';
+    celebration.innerHTML = `
+        <div class="celebration-content">
+            <h2 class="text-success">🎉 It's a Match! 🎉</h2>
+            <p>Congratulations! You both liked each other!</p>
+            <button class="btn btn-success" onclick="this.parentElement.parentElement.remove()">Awesome!</button>
+        </div>
+    `;
+    document.body.appendChild(celebration);
+    
+    // Auto remove after 10 seconds
+    setTimeout(() => {
+        if (celebration.parentNode) {
+            celebration.remove();
+        }
+    }, 10000);
+}
+
+function updateMatchCount() {
+    const visibleCards = document.querySelectorAll('.match-card');
+    const countBadge = document.querySelector('.badge.bg-primary');
+    if (countBadge) {
+        countBadge.textContent = visibleCards.length;
+    }
+}
+
+function getAdditionalSuggestions() {
+    fetch('/suggest_matches')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.suggested_matches.length > 0) {
+            // Show suggestions in a modal or replace the no-matches section
+            showSuggestionsModal(data.suggested_matches);
+        } else {
+            showAlert('No additional suggestions available at the moment. Try completing your profile!', 'info');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error getting suggestions', 'error');
+    });
+}
+
+function showSuggestionsModal(suggestions) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-lightbulb me-2"></i>Additional Suggestions
+                    </h5>
+                    <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        ${suggestions.map(user => `
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">${user.name}</h6>
+                                        <p class="text-muted mb-2">${user.course || 'Course not specified'}</p>
+                                        <p class="text-muted mb-2">${user.year || 'Year not specified'}</p>
+                                        <p class="text-muted mb-2">${user.location || 'Location not specified'}</p>
+                                        <div class="compatibility-badge mb-3">
+                                            <span class="badge bg-success">${user.compatibility}% Compatible</span>
+                                        </div>
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <a href="/profile/${user.id}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>View Profile
+                                            </a>
+                                            <button class="btn btn-primary btn-sm" onclick="likeUser('${user.id}'); this.closest('.modal').remove();">
+                                                <i class="fas fa-heart me-1"></i>Like
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fade show';
+    
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+    
+    // Remove backdrop when modal is closed
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+            backdrop.remove();
+        }
+    });
+}
+
+function getYearSuffix(year) {
+    if (year == 1) return 'st';
+    if (year == 2) return 'nd';
+    if (year == 3) return 'rd';
+    return 'th';
+}
+
+function refreshMatches() {
+    // Show loading state
+    const refreshBtn = document.querySelector('button[onclick="refreshMatches()"]');
+    const originalText = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+    refreshBtn.disabled = true;
+    
+    // Reload the page to get fresh matches
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .match-celebration {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    .celebration-content {
+        background: white;
+        padding: 3rem;
+        border-radius: 20px;
+        text-align: center;
+        animation: bounceIn 0.8s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes bounceIn {
+        0% { transform: scale(0.3); opacity: 0; }
+        50% { transform: scale(1.05); }
+        70% { transform: scale(0.9); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
