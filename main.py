@@ -68,6 +68,22 @@ except Exception as e:
     print("4. Connection string is properly formatted")
     print("\nCheck MONGODB_SETUP.md for detailed setup instructions")
 
+# Add global error handler
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error(f'Server Error: {error}')
+    return render_template('500.html'), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    app.logger.error(f'Not Found: {error}')
+    return render_template('404.html'), 404
+
+# Add logging configuration
+import logging
+logging.basicConfig(level=logging.INFO)
+app.logger.setLevel(logging.INFO)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -618,7 +634,12 @@ def suggest_matches():
 # Routes
 @app.route('/')
 def index():
-    return render_template('index.html')
+    try:
+        app.logger.info('Index route accessed')
+        return render_template('index.html')
+    except Exception as e:
+        app.logger.error(f'Error in index route: {e}')
+        return render_template('500.html'), 500
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
