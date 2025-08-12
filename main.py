@@ -377,8 +377,15 @@ def forgot_username():
             flash('No account found with that email address', 'error')
             return render_template('forgot_username.html')
         
-        # Show username directly without verification
-        return render_template('forgot_username.html', user_data=user_data, email=email)
+        # Only show minimal info for privacy: name and profile picture
+        privacy_safe_data = {
+            'first_name': user_data.get('first_name', ''),
+            'last_name': user_data.get('last_name', ''),
+            'profile_picture': user_data.get('profile_picture', ''),
+            'username': user_data.get('username', '')  # We'll show this in a secure way
+        }
+        
+        return render_template('forgot_username.html', user_data=privacy_safe_data, email=email)
     
     return render_template('forgot_username.html')
 
@@ -564,10 +571,16 @@ def register():
             course = request.form['course']
             year = int(request.form['year'])
             
-            # Validate email domain
-            if not email.endswith('@smail.iitm.ac.in'):
-                flash('Please use your @smail.iitm.ac.in email address', 'error')
-                return render_template('register.html')
+            # Auto-detect IIT Madras users and allow all email domains
+            if email.endswith('@smail.iitm.ac.in'):
+                # IIT Madras student - auto-fill institute
+                institute = 'IIT Madras'
+            else:
+                # Other users - they need to choose institute
+                institute = request.form.get('institute', '')
+                if not institute:
+                    flash('Please select your institute', 'error')
+                    return render_template('register.html')
             
             # Check if username or email already exists
             if mongo.db.users.find_one({'username': username}):
@@ -578,31 +591,31 @@ def register():
                 flash('Email already exists!', 'error')
                 return render_template('register.html')
             
-            # Create new user document with minimal required fields
-            user_data = {
-                'username': username,
-                'email': email,
-                'password_hash': generate_password_hash(password),
-                'first_name': first_name,
-                'last_name': last_name,
-                'age': age,
-                'gender': gender,
-                'interested_in': interested_in,
-                'institute': institute,
-                'course': course,
-                'year': year,
-                # Optional fields - can be filled later
-                'bio': '',
-                'profile_picture': '',
-                'location': '',
-                'building_block': '',
-                'interests': [],
-                'study_habits': [],
-                'personality_type': '',
-                'life_goals': [],
-                'compatibility_score': 0,
-                'created_at': datetime.now(timezone.utc)
-            }
+             # Create new user document with minimal required fields
+             user_data = {
+                 'username': username,
+                 'email': email,
+                 'password_hash': generate_password_hash(password),
+                 'first_name': first_name,
+                 'last_name': last_name,
+                 'age': age,
+                 'gender': gender,
+                 'interested_in': interested_in,
+                 'institute': institute,  # Auto-filled for IIT Madras, user-selected for others
+                 'course': course,
+                 'year': year,
+                 # Optional fields - can be filled later
+                 'bio': '',
+                 'profile_picture': '',
+                 'location': '',
+                 'building_block': '',
+                 'interests': [],
+                 'study_habits': [],
+                 'personality_type': '',
+                 'life_goals': [],
+                 'compatibility_score': 0,
+                 'created_at': datetime.now(timezone.utc)
+             }
             
             result = mongo.db.users.insert_one(user_data)
             
@@ -1156,6 +1169,58 @@ def clear_all_notifications():
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+
+@app.route('/delete_profile', methods=['POST'])
+@login_required
+def delete_profile():
+    """Delete user profile and all associated data"""
+    try:
+        user_id = ObjectId(current_user.id)
+        
+        # Delete user's profile picture if exists
+        if current_user.profile_picture:
+            try:
+                old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], current_user.profile_picture)
+                if os.path.exists(old_filepath):
+                    os.remove(old_filepath)
+            except Exception as e:
+                print(f"Error deleting profile picture: {e}")
+        
+        # Delete all user data from collections
+        # 1. Delete user from users collection
+        mongo.db.users.delete_one({'_id': user_id})
+        
+        # 2. Delete all likes where user is liker or liked
+        mongo.db.likes.delete_many({
+            '$or': [
+                {'liker_id': user_id},
+                {'liked_id': user_id}
+            ]
+        })
+        
+        # 3. Delete all messages where user is sender or receiver
+        mongo.db.messages.delete_many({
+            '$or': [
+                {'sender_id': user_id},
+                {'receiver_id': user_id}
+            ]
+        })
+        
+        # 4. Delete all notifications where user is receiver
+        mongo.db.notifications.delete_many({'receiver_id': user_id})
+        
+        # 5. Delete all notifications where user is liker (for likes they sent)
+        mongo.db.notifications.delete_many({'liker_id': user_id})
+        
+        # Logout user
+        logout_user()
+        
+        flash('Your profile has been permanently deleted. All your data has been removed from our system.', 'success')
+        return redirect(url_for('index'))
+        
+    except Exception as e:
+        flash(f'Error deleting profile: {str(e)}', 'error')
+        return redirect(url_for('profile', user_id=current_user.id))
 
 # Error handlers
 @app.errorhandler(404)

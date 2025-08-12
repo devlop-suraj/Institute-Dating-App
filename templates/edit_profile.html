@@ -124,16 +124,65 @@
                             <textarea class="form-control" id="bio" name="bio" rows="4" placeholder="Tell us about yourself, your dreams, and what you're looking for...">{{ current_user.bio }}</textarea>
                         </div>
 
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <a href="{{ url_for('profile', user_id=current_user.id) }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Back to Profile
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Save Changes
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteProfileModal">
+                                    <i class="fas fa-trash me-2"></i>Delete Profile
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Profile Modal -->
+<div class="modal fade" id="deleteProfileModal" tabindex="-1" aria-labelledby="deleteProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteProfileModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Profile
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-trash fa-3x text-danger mb-3"></i>
+                    <h5 class="text-danger">Are you sure?</h5>
+                </div>
+                <p class="text-muted">
+                    This action will <strong>permanently delete</strong> your profile and all associated data including:
+                </p>
+                <ul class="text-muted">
+                    <li>Your profile information</li>
+                    <li>All your likes and matches</li>
+                    <li>All your messages and conversations</li>
+                    <li>All your notifications</li>
+                    <li>Your profile picture</li>
+                </ul>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <form method="POST" action="{{ url_for('delete_profile') }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Yes, Delete My Profile
+                    </button>
+                </form>
             </div>
         </div>
     </div>

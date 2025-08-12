@@ -37,10 +37,8 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="email" class="form-label">Email Address *</label>
-                                <input type="email" class="form-control" id="email" name="email" 
-                                       pattern="[a-zA-Z0-9._%+-]+@smail\.iitm\.ac\.in$" 
-                                       title="Please use your @smail.iitm.ac.in email address" required>
-                                <div class="form-text">Use your @smail.iitm.ac.in email address</div>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="form-text">Use any valid email address</div>
                             </div>
                         </div>
 
@@ -80,8 +78,33 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="institute" class="form-label">Institute *</label>
-                                <input type="text" class="form-control" id="institute" name="institute" 
-                                       value="IIT Madras" readonly>
+                                <select class="form-select" id="institute" name="institute" required>
+                                    <option value="">Select Institute</option>
+                                    <option value="IIT Madras">IIT Madras</option>
+                                    <option value="IIT Delhi">IIT Delhi</option>
+                                    <option value="IIT Bombay">IIT Bombay</option>
+                                    <option value="IIT Kanpur">IIT Kanpur</option>
+                                    <option value="IIT Kharagpur">IIT Kharagpur</option>
+                                    <option value="IIT Roorkee">IIT Roorkee</option>
+                                    <option value="IIT Guwahati">IIT Guwahati</option>
+                                    <option value="IIT Hyderabad">IIT Hyderabad</option>
+                                    <option value="IIT Indore">IIT Indore</option>
+                                    <option value="IIT Mandi">IIT Mandi</option>
+                                    <option value="IIT Patna">IIT Patna</option>
+                                    <option value="IIT Ropar">IIT Ropar</option>
+                                    <option value="IIT Bhubaneswar">IIT Bhubaneswar</option>
+                                    <option value="IIT Gandhinagar">IIT Gandhinagar</option>
+                                    <option value="IIT Jodhpur">IIT Jodhpur</option>
+                                    <option value="IIT Palakkad">IIT Palakkad</option>
+                                    <option value="IIT Tirupati">IIT Tirupati</option>
+                                    <option value="IIT Dhanbad">IIT Dhanbad</option>
+                                    <option value="IIT Bhilai">IIT Bhilai</option>
+                                    <option value="IIT Goa">IIT Goa</option>
+                                    <option value="IIT Jammu">IIT Jammu</option>
+                                    <option value="IIT Dharwad">IIT Dharwad</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <div class="form-text">IIT Madras students: auto-filled, others: select your institute</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="course" class="form-label">Course *</label>
@@ -137,28 +160,40 @@
 </div>
 
 <script>
-// Email validation for @smail.iitm.ac.in domain
+// Auto-fill institute based on email domain
 document.getElementById('email').addEventListener('blur', function() {
     const email = this.value;
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@smail\.iitm\.ac\.in$/;
+    const instituteSelect = document.getElementById('institute');
     
-    if (email && !emailPattern.test(email)) {
-        this.setCustomValidity('Please use your @smail.iitm.ac.in email address');
-        this.classList.add('is-invalid');
+    if (email.endsWith('@smail.iitm.ac.in')) {
+        // IIT Madras student - auto-fill and disable
+        instituteSelect.value = 'IIT Madras';
+        instituteSelect.disabled = true;
+        instituteSelect.classList.add('form-control-plaintext');
+        instituteSelect.classList.remove('form-select');
     } else {
-        this.setCustomValidity('');
-        this.classList.remove('is-invalid');
+        // Other user - enable selection
+        instituteSelect.disabled = false;
+        instituteSelect.classList.remove('form-control-plaintext');
+        instituteSelect.classList.add('form-select');
+        instituteSelect.value = ''; // Reset to empty
     }
 });
 
 // Form validation
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     const email = document.getElementById('email').value;
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@smail\.iitm\.ac\.in$/;
+    const institute = document.getElementById('institute').value;
     
-    if (!emailPattern.test(email)) {
+    if (!email) {
         e.preventDefault();
-        alert('Please use your @smail.iitm.ac.in email address');
+        alert('Please enter your email address');
+        return false;
+    }
+    
+    if (!institute) {
+        e.preventDefault();
+        alert('Please select your institute');
         return false;
     }
 });
