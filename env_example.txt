@@ -1,13 +1,25 @@
-# MongoDB Atlas Connection String
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+# Institute Dating App - Environment Variables Example
+# Copy this file to .env and fill in your actual values
 
-# Flask Configuration
+# MongoDB Configuration
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+
+# Secret Key
 SECRET_KEY=your-secret-key-here
-FLASK_ENV=development
 
-# Application Configuration
-DEBUG=True
+# Email Configurations for Different Purposes
 
-# Email Configuration for Password Reset
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
+# 1. OTP and Account Verification Emails
+OTP_MAIL_USERNAME=surajkumarch110@gmail.com
+OTP_MAIL_PASSWORD=your_otp_email_app_password
+
+# 2. Notification and General Message Emails
+NOTIFICATION_MAIL_USERNAME=mindcodex5@gmail.com
+NOTIFICATION_MAIL_PASSWORD=bppw pjcr rltd mcyq
+
+# 3. Welcome and Confirmation Emails
+WELCOME_MAIL_USERNAME=mindcodex5@gmail.com
+WELCOME_MAIL_PASSWORD=bppw pjcr rltd mcyq
+
+# Flask Environment
+FLASK_ENV=production

@@ -37,16 +37,47 @@ MAX_FILE_SIZE = app.config.get('MAX_CONTENT_LENGTH', 5 * 1024 * 1024)  # 5MB
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
-# Email configuration for password reset
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'surajkumarch110@gmail.com'
-app.config['MAIL_PASSWORD'] = 'tkna qlfx bouq olwm'
-app.config['MAIL_DEFAULT_SENDER'] = 'surajkumarch110@gmail.com'
+# Initialize multiple Flask-Mail instances for different purposes
+from flask_mail import Mail
 
-# Initialize Flask-Mail
-mail = Mail(app)
+# OTP Mail Configuration
+otp_mail = Mail()
+otp_mail.init_app(app)
+otp_mail.config.update(
+    MAIL_SERVER=app.config.get('OTP_MAIL_SERVER', 'smtp.gmail.com'),
+    MAIL_PORT=app.config.get('OTP_MAIL_PORT', 587),
+    MAIL_USE_TLS=app.config.get('OTP_MAIL_USE_TLS', True),
+    MAIL_USERNAME=app.config.get('OTP_MAIL_USERNAME', 'surajkumarch110@gmail.com'),
+    MAIL_PASSWORD=app.config.get('OTP_MAIL_PASSWORD', 'tkna qlfx bouq olwm'),
+    MAIL_DEFAULT_SENDER=app.config.get('OTP_MAIL_DEFAULT_SENDER', 'surajkumarch110@gmail.com')
+)
+
+# Notification Mail Configuration
+notification_mail = Mail()
+notification_mail.init_app(app)
+notification_mail.config.update(
+    MAIL_SERVER=app.config.get('NOTIFICATION_MAIL_SERVER', 'smtp.gmail.com'),
+    MAIL_PORT=app.config.get('NOTIFICATION_MAIL_PORT', 587),
+    MAIL_USE_TLS=app.config.get('NOTIFICATION_MAIL_USE_TLS', True),
+    MAIL_USERNAME=app.config.get('NOTIFICATION_MAIL_USERNAME', 'mindcodex5@gmail.com'),
+    MAIL_PASSWORD=app.config.get('NOTIFICATION_MAIL_PASSWORD', 'bppw pjcr rltd mcyq'),
+    MAIL_DEFAULT_SENDER=app.config.get('NOTIFICATION_MAIL_DEFAULT_SENDER', 'mindcodex5@gmail.com')
+)
+
+# Welcome Mail Configuration
+welcome_mail = Mail()
+welcome_mail.init_app(app)
+welcome_mail.config.update(
+    MAIL_SERVER=app.config.get('WELCOME_MAIL_SERVER', 'smtp.gmail.com'),
+    MAIL_PORT=app.config.get('WELCOME_MAIL_PORT', 587),
+    MAIL_USE_TLS=app.config.get('WELCOME_MAIL_USE_TLS', True),
+    MAIL_USERNAME=app.config.get('WELCOME_MAIL_USERNAME', 'mindcodex5@gmail.com'),
+    MAIL_PASSWORD=app.config.get('WELCOME_MAIL_PASSWORD', 'bppw pjcr rltd mcyq'),
+    MAIL_DEFAULT_SENDER=app.config.get('WELCOME_MAIL_DEFAULT_SENDER', 'mindcodex5@gmail.com')
+)
+
+# Default mail instance (for backward compatibility)
+mail = otp_mail
 
 # Initialize serializer for password reset tokens
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
@@ -159,7 +190,7 @@ Founded by Suraj Kumar - CEO
             </div>
             '''
         )
-        mail.send(msg)
+        notification_mail.send(msg)
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
@@ -170,7 +201,7 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, first_name):
-    """Send OTP email for account verification"""
+    """Send OTP email for account verification using OTP mail instance"""
     try:
         msg = Message(
             'Account Verification OTP - Institute Dating',
@@ -223,14 +254,14 @@ Founded by Suraj Kumar - CEO
             </div>
             '''
         )
-        mail.send(msg)
+        otp_mail.send(msg)
         return True
     except Exception as e:
         print(f"Error sending OTP email: {e}")
         return False
 
 def send_signup_confirmation_email(email, username, user_id, first_name, last_name):
-    """Send signup confirmation email with user ID"""
+    """Send signup confirmation email with user ID using welcome mail instance"""
     try:
         msg = Message(
             'Welcome to Institute Dating! 🎉 - Signup Confirmation',
@@ -255,7 +286,7 @@ Founded by Suraj Kumar - CEO
                 <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
                     <h1 style="color: #667eea; margin-bottom: 20px;">🎉 Welcome to Institute Dating! 🎉</h1>
                     
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #667eea;">
                         <h3 style="color: #333; margin-bottom: 15px;">Account Details</h3>
                         <p style="font-size: 16px; margin: 8px 0;"><strong>Username:</strong> <span style="color: #667eea;">{username}</span></p>
                         <p style="font-size: 16px; margin: 8px 0;"><strong>User ID:</strong> <span style="color: #667eea; font-family: monospace;">{user_id}</span></p>
@@ -266,12 +297,12 @@ Founded by Suraj Kumar - CEO
                         Your account has been successfully created! 🎊
                     </p>
                     
-                    <p style="font-size: 16px; color: #666; margin: 15px 0;">
+                    <p style="color: #666; margin: 15px 0;">
                         You can now login to your account and start exploring potential matches from your institute!
                     </p>
                     
                     <div style="margin: 30px 0;">
-                        <a href="http://localhost:5000/login" style="background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; display: inline-block; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        <a href="https://institute-dating-app-final.azurewebsites.net/login" style="background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; display: inline-block; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
                             🚀 Login Now
                         </a>
                     </div>
@@ -293,10 +324,70 @@ Founded by Suraj Kumar - CEO
             </div>
             '''
         )
-        mail.send(msg)
+        welcome_mail.send(msg)
         return True
     except Exception as e:
         print(f"Error sending signup confirmation email: {e}")
+        return False
+
+def send_match_notification_email(email, liker_name, receiver_name):
+    """Send match notification email using notification mail instance"""
+    try:
+        msg = Message(
+            '🎉 It\'s a Match! - Institute Dating',
+            recipients=[email],
+            body=f'''Congratulations {receiver_name}!
+
+You have a new match on Institute Dating! 🎉
+
+{liker_name} liked your profile and it\'s a mutual match!
+
+You can now start chatting with {liker_name} and explore your connection.
+
+Best regards,
+Institute Dating Team
+Founded by Suraj Kumar - CEO
+''',
+            html=f'''
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); padding: 20px; border-radius: 15px;">
+                <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
+                    <h1 style="color: #ff6b6b; margin-bottom: 20px;">🎉 It\'s a Match! 🎉</h1>
+                    
+                    <div style="background: #fff5f5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff6b6b;">
+                        <h3 style="color: #333; margin-bottom: 15px;">Congratulations!</h3>
+                        <p style="font-size: 18px; color: #333; margin: 15px 0;">
+                            You have a new match on Institute Dating!
+                        </p>
+                        <p style="font-size: 16px; color: #666; margin: 10px 0;">
+                            <strong>{liker_name}</strong> liked your profile and it\'s a mutual match!
+                        </p>
+                    </div>
+                    
+                    <p style="font-size: 16px; color: #666; margin: 20px 0;">
+                        You can now start chatting with {liker_name} and explore your connection.
+                    </p>
+                    
+                    <div style="margin: 30px 0;">
+                        <a href="https://institute-dating-app-final.azurewebsites.net/matches" style="background: #ff6b6b; color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; display: inline-block; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);">
+                            💬 Start Chatting
+                        </a>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="color: white; font-size: 14px; margin: 0;">
+                        Best regards,<br>
+                        <strong>Institute Dating Team</strong><br>
+                        Founded by <strong>Suraj Kumar</strong> - CEO
+                    </p>
+                </div>
+            </div>
+            '''
+        )
+        notification_mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending match notification email: {e}")
         return False
 
 # User class for Flask-Login
@@ -1050,6 +1141,20 @@ def like_user(user_id):
             'liker_id': ObjectId(user_id),
             'liked_id': ObjectId(current_user.id)
         })
+        
+        # If it's a mutual match, send notification email
+        if mutual_match:
+            try:
+                # Get receiver's email
+                receiver_data = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+                if receiver_data and receiver_data.get('email'):
+                    send_match_notification_email(
+                        receiver_data['email'],
+                        f"{current_user.first_name} {current_user.last_name}",
+                        f"{receiver_data.get('first_name', '')} {receiver_data.get('last_name', '')}"
+                    )
+            except Exception as e:
+                print(f"Error sending match notification email: {e}")
         
         return jsonify({
             'success': True, 
